@@ -1,10 +1,10 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
-export function generatePackageJson(outputDir: string): void {
+export function generatePackageJson(outputDir: string, version: string): void {
   const packageJson = {
     name: '@agentic-pipeline-schemas/typescript',
-    version: '0.1.0',
+    version,
     type: 'module',
     main: 'dist/index.js',
     types: 'dist/index.d.ts',

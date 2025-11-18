@@ -10,6 +10,7 @@ import { schemaFileToTypeName } from '../generators/typename-generator.js';
 export interface GenerateOptions {
   output: string;
   verbose: boolean;
+  version: string;
 }
 
 export async function generate(
@@ -60,7 +61,7 @@ export async function generate(
   }
 
   console.log('Generating package.json...');
-  generatePackageJson(outputPackageDir);
+  generatePackageJson(outputPackageDir, options.version);
 
   console.log('Generating tsconfig.json...');
   generateTsConfig(outputPackageDir);
