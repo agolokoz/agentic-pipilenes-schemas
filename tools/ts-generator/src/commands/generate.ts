@@ -5,6 +5,7 @@ import { generateValidator } from '../generators/validator-generator.js';
 import { generatePackageJson } from '../generators/package-generator.js';
 import { generateTsConfig } from '../generators/tsconfig-generator.js';
 import { generateIndex } from '../generators/index-generator.js';
+import { generateReadme } from '../generators/readme-generator.js';
 import { schemaFileToTypeName } from '../generators/typename-generator.js';
 
 export interface GenerateOptions {
@@ -69,6 +70,9 @@ export async function generate(
 
   console.log('Generating index.ts...');
   generateIndex(typeNames, outputPackageDir);
+
+  console.log('Generating README.md...');
+  generateReadme(typeNames, options.packageName, outputPackageDir);
 
   console.log('Done!');
 }
