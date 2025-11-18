@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    env:
+      PACKAGE_NAME: ${{ vars.NPM_PACKAGE_NAME }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Tag must follow vX.X.X format (e.g., v1.0.0)"
+            exit 1
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install ts-generator dependencies
+        run: pnpm install
+        working-directory: tools/ts-generator
+
+      - name: Run ts-generator tests
+        run: pnpm test
+        working-directory: tools/ts-generator
+
+      - name: Build ts-generator
+        run: pnpm build
+        working-directory: tools/ts-generator
+
+      - name: Generate TypeScript package
+        run: |
+          node dist/index.js generate ../../schemas \
+            --output ../../packages/typescript \
+            --package-name "${{ env.PACKAGE_NAME }}" \
+            --package-version "${{ steps.extract_version.outputs.version }}"
+        working-directory: tools/ts-generator
+
+      - name: Install generated package dependencies
+        run: pnpm install
+        working-directory: packages/typescript
+
+      - name: Build generated package
+        run: pnpm build
+        working-directory: packages/typescript
+
+      - name: Publish to npm
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/typescript
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
