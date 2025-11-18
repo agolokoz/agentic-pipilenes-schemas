@@ -1,12 +1,12 @@
 import { readdirSync, readFileSync, mkdirSync } from 'fs';
 import { join, resolve } from 'path';
 import { generateTypes } from '../generators/type-generator.js';
-import { generateValidator } from '../generators/validator-generator.js';
+import { generateParser } from '../generators/parser-generator.js';
 import { generatePackageJson } from '../generators/package-generator.js';
 import { generateTsConfig } from '../generators/tsconfig-generator.js';
 import { generateIndex } from '../generators/index-generator.js';
 import { generateReadme } from '../generators/readme-generator.js';
-import { generateValidationTypes } from '../generators/validation-types-generator.js';
+import { generateParsingTypes } from '../generators/parsing-types-generator.js';
 import { schemaFileToTypeName } from '../generators/typename-generator.js';
 
 export interface GenerateOptions {
@@ -43,10 +43,10 @@ export async function generate(
   }
 
   mkdirSync(join(outputDir, 'types'), { recursive: true });
-  mkdirSync(join(outputDir, 'validators'), { recursive: true });
+  mkdirSync(join(outputDir, 'parsers'), { recursive: true });
 
-  console.log('Generating validation types...');
-  generateValidationTypes(outputDir);
+  console.log('Generating parsing types...');
+  generateParsingTypes(outputDir);
 
   const typeNames: string[] = [];
 
@@ -62,8 +62,8 @@ export async function generate(
     console.log(`Generating types for ${typeName}...`);
     await generateTypes(schema, typeName, outputDir, resolvedSchemasDir);
 
-    console.log(`Generating validator for ${typeName}...`);
-    await generateValidator(typeName, outputDir, schemaPath);
+    console.log(`Generating parser for ${typeName}...`);
+    await generateParser(typeName, outputDir, schemaPath);
   }
 
   console.log('Generating package.json...');

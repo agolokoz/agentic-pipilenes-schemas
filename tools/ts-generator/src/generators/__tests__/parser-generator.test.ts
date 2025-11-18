@@ -1,11 +1,11 @@
-import { generateValidator } from '../validator-generator.js';
+import { generateParser } from '../parser-generator.js';
 import { readFileSync, rmSync, mkdirSync, existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
 
-describe('generateValidator', () => {
-  const testOutputDir = '/tmp/test-validator-generator';
-  const validatorsDir = join(testOutputDir, 'validators');
+describe('generateParser', () => {
+  const testOutputDir = '/tmp/test-parser-generator';
+  const parsersDir = join(testOutputDir, 'parsers');
   const typesDir = join(testOutputDir, 'types');
   const schemasDir = join(testOutputDir, 'schemas');
 
@@ -27,7 +27,7 @@ describe('generateValidator', () => {
     if (existsSync(testOutputDir)) {
       rmSync(testOutputDir, { recursive: true });
     }
-    mkdirSync(validatorsDir, { recursive: true });
+    mkdirSync(parsersDir, { recursive: true });
     mkdirSync(typesDir, { recursive: true });
     mkdirSync(schemasDir, { recursive: true });
 
@@ -42,49 +42,49 @@ describe('generateValidator', () => {
   });
 
   describe('file generation', () => {
-    it('should create validator file with correct name', async () => {
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+    it('should create parser file with correct name', async () => {
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const outputPath = join(validatorsDir, 'person.ts');
+      const outputPath = join(parsersDir, 'person.ts');
       expect(existsSync(outputPath)).toBe(true);
     });
 
-    it('should create validator file in lowercase', async () => {
-      await generateValidator('UserProfile', testOutputDir, personSchemaPath);
+    it('should create parser file in lowercase', async () => {
+      await generateParser('UserProfile', testOutputDir, personSchemaPath);
 
-      const outputPath = join(validatorsDir, 'userprofile.ts');
+      const outputPath = join(parsersDir, 'userprofile.ts');
       expect(existsSync(outputPath)).toBe(true);
     });
 
     it('should generate file for different type names', async () => {
-      await generateValidator('Company', testOutputDir, personSchemaPath);
+      await generateParser('Company', testOutputDir, personSchemaPath);
 
-      const outputPath = join(validatorsDir, 'company.ts');
+      const outputPath = join(parsersDir, 'company.ts');
       expect(existsSync(outputPath)).toBe(true);
     });
   });
 
   describe('code structure', () => {
     it('should import Ajv', async () => {
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
+      const content = readFileSync(join(parsersDir, 'person.ts'), 'utf-8');
 
       expect(content).toContain("import Ajv from 'ajv';");
     });
 
     it('should import type from types directory', async () => {
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
+      const content = readFileSync(join(parsersDir, 'person.ts'), 'utf-8');
 
       expect(content).toContain("import type { Person } from '../types/person.js';");
     });
 
     it('should embed the schema', async () => {
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
+      const content = readFileSync(join(parsersDir, 'person.ts'), 'utf-8');
 
       expect(content).toContain('const schema = {');
       expect(content).toContain('"type": "object"');
@@ -95,39 +95,39 @@ describe('generateValidator', () => {
     });
 
     it('should create Ajv instance with allErrors', async () => {
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
+      const content = readFileSync(join(parsersDir, 'person.ts'), 'utf-8');
 
       expect(content).toContain('const ajv = new Ajv({ allErrors: true });');
     });
 
-    it('should import ValidationError and ValidationResult from validation-types', async () => {
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+    it('should import ParsingError and ParsingResult from parsing-types', async () => {
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
+      const content = readFileSync(join(parsersDir, 'person.ts'), 'utf-8');
 
-      expect(content).toContain("import type { ValidationResult, ValidationError } from './validation-types.js';");
+      expect(content).toContain("import type { ParsingResult, ParsingError } from './parsing-types.js';");
     });
 
-    it('should export validation function with correct name', async () => {
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+    it('should export parsing function with correct name', async () => {
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
+      const content = readFileSync(join(parsersDir, 'person.ts'), 'utf-8');
 
-      expect(content).toContain('export function validatePerson(data: unknown): ValidationResult<Person> {');
+      expect(content).toContain('export function parsePerson(data: unknown): ParsingResult<Person> {');
     });
 
-    it('should handle different type names in validation function', async () => {
-      await generateValidator('UserProfile', testOutputDir, personSchemaPath);
+    it('should handle different type names in parsing function', async () => {
+      await generateParser('UserProfile', testOutputDir, personSchemaPath);
 
-      const content = readFileSync(join(validatorsDir, 'userprofile.ts'), 'utf-8');
+      const content = readFileSync(join(parsersDir, 'userprofile.ts'), 'utf-8');
 
-      expect(content).toContain('export function validateUserProfile(data: unknown): ValidationResult<UserProfile> {');
+      expect(content).toContain('export function parseUserProfile(data: unknown): ParsingResult<UserProfile> {');
     });
   });
 
-  describe('functional validation', () => {
+  describe('functional parsing', () => {
     beforeEach(() => {
       const personType = `export interface Person {
   first_name: string;
@@ -138,13 +138,13 @@ describe('generateValidator', () => {
       writeFileSync(join(typesDir, 'person.ts'), personType);
     });
 
-    it('should generate validator that validates correct data', async () => {
+    it('should generate parser that parses correct data', async () => {
 
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const testFile = join(testOutputDir, 'test-validator.ts');
+      const testFile = join(testOutputDir, 'test-parser.ts');
       const testCode = `
-import { validatePerson } from './validators/person.js';
+import { parsePerson } from './parsers/person.js';
 
 const validData = {
   first_name: 'John',
@@ -153,7 +153,7 @@ const validData = {
   age: 30
 };
 
-const result = validatePerson(validData);
+const result = parsePerson(validData);
 console.log(JSON.stringify(result));
 `;
       writeFileSync(testFile, testCode);
@@ -169,7 +169,7 @@ console.log(JSON.stringify(result));
 
       execSync('pnpm install', { cwd: testOutputDir, stdio: 'pipe' });
 
-      const output = execSync(`npx tsx test-validator.ts`, {
+      const output = execSync(`npx tsx test-parser.ts`, {
         cwd: testOutputDir,
         encoding: 'utf-8',
       });
@@ -184,19 +184,19 @@ console.log(JSON.stringify(result));
       });
     });
 
-    it('should generate validator that rejects missing required fields', async () => {
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+    it('should generate parser that rejects missing required fields', async () => {
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const testFile = join(testOutputDir, 'test-validator.ts');
+      const testFile = join(testOutputDir, 'test-parser.ts');
       const testCode = `
-import { validatePerson } from './validators/person.js';
+import { parsePerson } from './parsers/person.js';
 
 const invalidData = {
   first_name: 'John',
   last_name: 'Doe'
 };
 
-const result = validatePerson(invalidData);
+const result = parsePerson(invalidData);
 console.log(JSON.stringify(result));
 `;
       writeFileSync(testFile, testCode);
@@ -212,7 +212,7 @@ console.log(JSON.stringify(result));
 
       execSync('pnpm install', { cwd: testOutputDir, stdio: 'pipe' });
 
-      const output = execSync(`npx tsx test-validator.ts`, {
+      const output = execSync(`npx tsx test-parser.ts`, {
         cwd: testOutputDir,
         encoding: 'utf-8',
       });
@@ -223,12 +223,12 @@ console.log(JSON.stringify(result));
       expect(result.errors?.length).toBeGreaterThan(0);
     });
 
-    it('should generate validator that rejects wrong types', async () => {
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+    it('should generate parser that rejects wrong types', async () => {
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const testFile = join(testOutputDir, 'test-validator.ts');
+      const testFile = join(testOutputDir, 'test-parser.ts');
       const testCode = `
-import { validatePerson } from './validators/person.js';
+import { parsePerson } from './parsers/person.js';
 
 const invalidData = {
   first_name: 'John',
@@ -237,7 +237,7 @@ const invalidData = {
   age: 'thirty'
 };
 
-const result = validatePerson(invalidData);
+const result = parsePerson(invalidData);
 console.log(JSON.stringify(result));
 `;
       writeFileSync(testFile, testCode);
@@ -253,7 +253,7 @@ console.log(JSON.stringify(result));
 
       execSync('pnpm install', { cwd: testOutputDir, stdio: 'pipe' });
 
-      const output = execSync(`npx tsx test-validator.ts`, {
+      const output = execSync(`npx tsx test-parser.ts`, {
         cwd: testOutputDir,
         encoding: 'utf-8',
       });
@@ -263,12 +263,12 @@ console.log(JSON.stringify(result));
       expect(result.errors).toBeDefined();
     });
 
-    it('should generate validator that rejects additional properties', async () => {
-      await generateValidator('Person', testOutputDir, personSchemaPath);
+    it('should generate parser that rejects additional properties', async () => {
+      await generateParser('Person', testOutputDir, personSchemaPath);
 
-      const testFile = join(testOutputDir, 'test-validator.ts');
+      const testFile = join(testOutputDir, 'test-parser.ts');
       const testCode = `
-import { validatePerson } from './validators/person.js';
+import { parsePerson } from './parsers/person.js';
 
 const invalidData = {
   first_name: 'John',
@@ -278,7 +278,7 @@ const invalidData = {
   extra_field: 'not allowed'
 };
 
-const result = validatePerson(invalidData);
+const result = parsePerson(invalidData);
 console.log(JSON.stringify(result));
 `;
       writeFileSync(testFile, testCode);
@@ -294,7 +294,7 @@ console.log(JSON.stringify(result));
 
       execSync('pnpm install', { cwd: testOutputDir, stdio: 'pipe' });
 
-      const output = execSync(`npx tsx test-validator.ts`, {
+      const output = execSync(`npx tsx test-parser.ts`, {
         cwd: testOutputDir,
         encoding: 'utf-8',
       });

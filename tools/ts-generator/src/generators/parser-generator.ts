@@ -2,7 +2,7 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import $RefParser from '@apidevtools/json-schema-ref-parser';
 
-export async function generateValidator(
+export async function generateParser(
   typeName: string,
   outputDir: string,
   schemaPath: string
@@ -10,17 +10,17 @@ export async function generateValidator(
   const resolvedSchema = await $RefParser.dereference(schemaPath) as Record<string, unknown>;
   const schemaString = JSON.stringify(resolvedSchema, null, 2);
 
-  const validatorCode = `import Ajv from 'ajv';
+  const parserCode = `import Ajv from 'ajv';
 import type { ${typeName} } from '../types/${typeName.toLowerCase()}.js';
-import type { ValidationResult, ValidationError } from './validation-types.js';
+import type { ParsingResult, ParsingError } from './parsing-types.js';
 
 const schema = ${schemaString};
 
 const ajv = new Ajv({ allErrors: true });
-const validateFunction = ajv.compile(schema);
+const parseFunction = ajv.compile(schema);
 
-export function validate${typeName}(data: unknown): ValidationResult<${typeName}> {
-  const valid = validateFunction(data);
+export function parse${typeName}(data: unknown): ParsingResult<${typeName}> {
+  const valid = parseFunction(data);
 
   if (valid) {
     return {
@@ -31,15 +31,15 @@ export function validate${typeName}(data: unknown): ValidationResult<${typeName}
 
   return {
     success: false,
-    errors: validateFunction.errors as ValidationError[],
+    errors: parseFunction.errors as ParsingError[],
   };
 }
 `;
 
   const outputPath = join(
     outputDir,
-    'validators',
+    'parsers',
     `${typeName.toLowerCase()}.ts`
   );
-  writeFileSync(outputPath, validatorCode);
+  writeFileSync(outputPath, parserCode);
 }

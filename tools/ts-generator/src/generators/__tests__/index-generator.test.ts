@@ -29,8 +29,8 @@ describe('generateIndex', () => {
     const content = readFileSync(outputPath, 'utf-8');
 
     expect(content).toContain("export * from './types/person.js';");
-    expect(content).toContain("export * from './validators/validation-types.js';");
-    expect(content).toContain("export * from './validators/person.js';");
+    expect(content).toContain("export * from './parsers/parsing-types.js';");
+    expect(content).toContain("export * from './parsers/person.js';");
   });
 
   it('should generate index.ts with multiple type names', () => {
@@ -43,13 +43,13 @@ describe('generateIndex', () => {
     expect(content).toContain("export * from './types/person.js';");
     expect(content).toContain("export * from './types/company.js';");
     expect(content).toContain("export * from './types/product.js';");
-    expect(content).toContain("export * from './validators/validation-types.js';");
-    expect(content).toContain("export * from './validators/person.js';");
-    expect(content).toContain("export * from './validators/company.js';");
-    expect(content).toContain("export * from './validators/product.js';");
+    expect(content).toContain("export * from './parsers/parsing-types.js';");
+    expect(content).toContain("export * from './parsers/person.js';");
+    expect(content).toContain("export * from './parsers/company.js';");
+    expect(content).toContain("export * from './parsers/product.js';");
   });
 
-  it('should separate type exports from validator exports with empty line', () => {
+  it('should separate type exports from parser exports with empty line', () => {
     const typeNames = ['Person'];
 
     generateIndex(typeNames, testOutputDir);
@@ -60,12 +60,12 @@ describe('generateIndex', () => {
     const typeExportIndex = lines.findIndex((line) =>
       line.includes("export * from './types/person.js'")
     );
-    const validationTypesIndex = lines.findIndex((line) =>
-      line.includes("export * from './validators/validation-types.js'")
+    const parsingTypesIndex = lines.findIndex((line) =>
+      line.includes("export * from './parsers/parsing-types.js'")
     );
 
     expect(lines[typeExportIndex + 1]).toBe('');
-    expect(validationTypesIndex).toBe(typeExportIndex + 2);
+    expect(parsingTypesIndex).toBe(typeExportIndex + 2);
   });
 
   it('should convert type names to lowercase in file paths', () => {
@@ -77,8 +77,8 @@ describe('generateIndex', () => {
 
     expect(content).toContain("export * from './types/personprofile.js';");
     expect(content).toContain("export * from './types/companyinfo.js';");
-    expect(content).toContain("export * from './validators/personprofile.js';");
-    expect(content).toContain("export * from './validators/companyinfo.js';");
+    expect(content).toContain("export * from './parsers/personprofile.js';");
+    expect(content).toContain("export * from './parsers/companyinfo.js';");
   });
 
   it('should handle empty type names array', () => {
@@ -88,7 +88,7 @@ describe('generateIndex', () => {
 
     const content = readFileSync(outputPath, 'utf-8');
 
-    expect(content).toContain("export * from './validators/validation-types.js';");
+    expect(content).toContain("export * from './parsers/parsing-types.js';");
   });
 
   it('should end file with newline', () => {

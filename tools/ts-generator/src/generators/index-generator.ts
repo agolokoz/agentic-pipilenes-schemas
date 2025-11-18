@@ -6,13 +6,13 @@ export function generateIndex(typeNames: string[], outputDir: string): void {
     (name) => `export * from './types/${name.toLowerCase()}.js';`
   );
 
-  const validatorExports = typeNames.map(
-    (name) => `export * from './validators/${name.toLowerCase()}.js';`
+  const parserExports = typeNames.map(
+    (name) => `export * from './parsers/${name.toLowerCase()}.js';`
   );
 
-  const validationTypesExport = `export * from './validators/validation-types.js';`;
+  const parsingTypesExport = `export * from './parsers/parsing-types.js';`;
 
-  const indexContent = [...typeExports, '', validationTypesExport, ...validatorExports].join('\n') + '\n';
+  const indexContent = [...typeExports, '', parsingTypesExport, ...parserExports].join('\n') + '\n';
 
   const outputPath = join(outputDir, 'src', 'index.ts');
   writeFileSync(outputPath, indexContent);

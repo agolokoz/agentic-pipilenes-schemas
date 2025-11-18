@@ -5,11 +5,11 @@ export function generateReadme(typeNames: string[], packageName: string, outputD
   const typesList = typeNames.map(name => `- **${name}**`).join('\n');
 
   const exampleType = typeNames[0] || 'Person';
-  const exampleValidatorFunction = `validate${exampleType}`;
+  const exampleParserFunction = `parse${exampleType}`;
 
   const readmeContent = `# ${packageName}
 
-TypeScript types and validators generated from JSON schemas.
+TypeScript types and parsers generated from JSON schemas.
 
 ## Installation
 
@@ -19,49 +19,49 @@ npm install ${packageName}
 
 ## Generated Types
 
-This package includes TypeScript types and validators for the following schemas:
+This package includes TypeScript types and parsers for the following schemas:
 
 ${typesList}
 
 ## Usage
 
-### Importing Types and Validators
+### Importing Types and Parsers
 
 \`\`\`typescript
-import { ${exampleType}, ${exampleValidatorFunction} } from '${packageName}';
+import { ${exampleType}, ${exampleParserFunction} } from '${packageName}';
 \`\`\`
 
 ### Validating Data
 
-Each validator function takes unknown data and returns a typed validation result:
+Each parser function takes unknown data and returns a typed parsing result:
 
 \`\`\`typescript
-import { ${exampleValidatorFunction} } from '${packageName}';
+import { ${exampleParserFunction} } from '${packageName}';
 
 const data = {
 };
 
-const result = ${exampleValidatorFunction}(data);
+const result = ${exampleParserFunction}(data);
 
 if (result.success) {
   console.log('Valid data:', result.data);
 } else {
-  console.error('Validation errors:', result.errors);
+  console.error('Parsing errors:', result.errors);
 }
 \`\`\`
 
-### Validation Result Interface
+### Parsing Result Interface
 
-All validators return a \`ValidationResult\` object with the following structure:
+All parsers return a \`ParsingResult\` object with the following structure:
 
 \`\`\`typescript
-interface ValidationResult {
+interface ParsingResult {
   success: boolean;
   data?: ${exampleType};
-  errors?: ValidationError[];
+  errors?: ParsingError[];
 }
 
-interface ValidationError {
+interface ParsingError {
   instancePath: string;
   schemaPath: string;
   keyword: string;
@@ -70,31 +70,31 @@ interface ValidationError {
 }
 \`\`\`
 
-### Example: Successful Validation
+### Example: Successful Parsing
 
 \`\`\`typescript
 const validData = {
 };
 
-const result = ${exampleValidatorFunction}(validData);
+const result = ${exampleParserFunction}(validData);
 
 console.log(result);
 \`\`\`
 
-### Example: Failed Validation
+### Example: Failed Parsing
 
 \`\`\`typescript
 const invalidData = {
 };
 
-const result = ${exampleValidatorFunction}(invalidData);
+const result = ${exampleParserFunction}(invalidData);
 
 console.log(result);
 \`\`\`
 
-## Available Validators
+## Available Parsers
 
-${typeNames.map(name => `- \`validate${name}(data: unknown): ValidationResult\``).join('\n')}
+${typeNames.map(name => `- \`parse${name}(data: unknown): ParsingResult\``).join('\n')}
 
 ## TypeScript Support
 
