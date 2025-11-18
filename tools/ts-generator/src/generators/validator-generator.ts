@@ -1,36 +1,25 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import $RefParser from '@apidevtools/json-schema-ref-parser';
 
-export function generateValidator(
-  schema: Record<string, unknown>,
+export async function generateValidator(
   typeName: string,
-  outputDir: string
-): void {
-  const schemaString = JSON.stringify(schema, null, 2);
+  outputDir: string,
+  schemaPath: string
+): Promise<void> {
+  const resolvedSchema = await $RefParser.dereference(schemaPath) as Record<string, unknown>;
+  const schemaString = JSON.stringify(resolvedSchema, null, 2);
 
   const validatorCode = `import Ajv from 'ajv';
 import type { ${typeName} } from '../types/${typeName.toLowerCase()}.js';
+import type { ValidationResult, ValidationError } from './validation-types.js';
 
 const schema = ${schemaString};
 
 const ajv = new Ajv({ allErrors: true });
 const validateFunction = ajv.compile(schema);
 
-export interface ValidationError {
-  instancePath: string;
-  schemaPath: string;
-  keyword: string;
-  params: Record<string, unknown>;
-  message?: string;
-}
-
-export interface ValidationResult {
-  success: boolean;
-  data?: ${typeName};
-  errors?: ValidationError[];
-}
-
-export function validate${typeName}(data: unknown): ValidationResult {
+export function validate${typeName}(data: unknown): ValidationResult<${typeName}> {
   const valid = validateFunction(data);
 
   if (valid) {

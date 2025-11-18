@@ -7,6 +7,7 @@ describe('generateValidator', () => {
   const testOutputDir = '/tmp/test-validator-generator';
   const validatorsDir = join(testOutputDir, 'validators');
   const typesDir = join(testOutputDir, 'types');
+  const schemasDir = join(testOutputDir, 'schemas');
 
   const personSchema = {
     type: 'object',
@@ -20,12 +21,18 @@ describe('generateValidator', () => {
     additionalProperties: false,
   };
 
+  let personSchemaPath: string;
+
   beforeEach(() => {
     if (existsSync(testOutputDir)) {
       rmSync(testOutputDir, { recursive: true });
     }
     mkdirSync(validatorsDir, { recursive: true });
     mkdirSync(typesDir, { recursive: true });
+    mkdirSync(schemasDir, { recursive: true });
+
+    personSchemaPath = join(schemasDir, 'person.schema.json');
+    writeFileSync(personSchemaPath, JSON.stringify(personSchema, null, 2));
   });
 
   afterEach(() => {
@@ -35,22 +42,22 @@ describe('generateValidator', () => {
   });
 
   describe('file generation', () => {
-    it('should create validator file with correct name', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
+    it('should create validator file with correct name', async () => {
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const outputPath = join(validatorsDir, 'person.ts');
       expect(existsSync(outputPath)).toBe(true);
     });
 
-    it('should create validator file in lowercase', () => {
-      generateValidator(personSchema, 'UserProfile', testOutputDir);
+    it('should create validator file in lowercase', async () => {
+      await generateValidator('UserProfile', testOutputDir, personSchemaPath);
 
       const outputPath = join(validatorsDir, 'userprofile.ts');
       expect(existsSync(outputPath)).toBe(true);
     });
 
-    it('should generate file for different type names', () => {
-      generateValidator(personSchema, 'Company', testOutputDir);
+    it('should generate file for different type names', async () => {
+      await generateValidator('Company', testOutputDir, personSchemaPath);
 
       const outputPath = join(validatorsDir, 'company.ts');
       expect(existsSync(outputPath)).toBe(true);
@@ -58,24 +65,24 @@ describe('generateValidator', () => {
   });
 
   describe('code structure', () => {
-    it('should import Ajv', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
+    it('should import Ajv', async () => {
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
 
       expect(content).toContain("import Ajv from 'ajv';");
     });
 
-    it('should import type from types directory', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
+    it('should import type from types directory', async () => {
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
 
       expect(content).toContain("import type { Person } from '../types/person.js';");
     });
 
-    it('should embed the schema', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
+    it('should embed the schema', async () => {
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
 
@@ -87,52 +94,36 @@ describe('generateValidator', () => {
       expect(content).toContain('"age"');
     });
 
-    it('should create Ajv instance with allErrors', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
+    it('should create Ajv instance with allErrors', async () => {
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
 
       expect(content).toContain('const ajv = new Ajv({ allErrors: true });');
     });
 
-    it('should export ValidationError interface', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
+    it('should import ValidationError and ValidationResult from validation-types', async () => {
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
 
-      expect(content).toContain('export interface ValidationError {');
-      expect(content).toContain('instancePath: string;');
-      expect(content).toContain('schemaPath: string;');
-      expect(content).toContain('keyword: string;');
-      expect(content).toContain('params: Record<string, unknown>;');
-      expect(content).toContain('message?: string;');
+      expect(content).toContain("import type { ValidationResult, ValidationError } from './validation-types.js';");
     });
 
-    it('should export ValidationResult interface', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
+    it('should export validation function with correct name', async () => {
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
 
-      expect(content).toContain('export interface ValidationResult {');
-      expect(content).toContain('success: boolean;');
-      expect(content).toContain('data?: Person;');
-      expect(content).toContain('errors?: ValidationError[];');
+      expect(content).toContain('export function validatePerson(data: unknown): ValidationResult<Person> {');
     });
 
-    it('should export validation function with correct name', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
-
-      const content = readFileSync(join(validatorsDir, 'person.ts'), 'utf-8');
-
-      expect(content).toContain('export function validatePerson(data: unknown): ValidationResult {');
-    });
-
-    it('should handle different type names in validation function', () => {
-      generateValidator(personSchema, 'UserProfile', testOutputDir);
+    it('should handle different type names in validation function', async () => {
+      await generateValidator('UserProfile', testOutputDir, personSchemaPath);
 
       const content = readFileSync(join(validatorsDir, 'userprofile.ts'), 'utf-8');
 
-      expect(content).toContain('export function validateUserProfile(data: unknown): ValidationResult {');
+      expect(content).toContain('export function validateUserProfile(data: unknown): ValidationResult<UserProfile> {');
     });
   });
 
@@ -147,9 +138,9 @@ describe('generateValidator', () => {
       writeFileSync(join(typesDir, 'person.ts'), personType);
     });
 
-    it('should generate validator that validates correct data', () => {
+    it('should generate validator that validates correct data', async () => {
 
-      generateValidator(personSchema, 'Person', testOutputDir);
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const testFile = join(testOutputDir, 'test-validator.ts');
       const testCode = `
@@ -193,8 +184,8 @@ console.log(JSON.stringify(result));
       });
     });
 
-    it('should generate validator that rejects missing required fields', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
+    it('should generate validator that rejects missing required fields', async () => {
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const testFile = join(testOutputDir, 'test-validator.ts');
       const testCode = `
@@ -232,8 +223,8 @@ console.log(JSON.stringify(result));
       expect(result.errors?.length).toBeGreaterThan(0);
     });
 
-    it('should generate validator that rejects wrong types', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
+    it('should generate validator that rejects wrong types', async () => {
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const testFile = join(testOutputDir, 'test-validator.ts');
       const testCode = `
@@ -272,8 +263,8 @@ console.log(JSON.stringify(result));
       expect(result.errors).toBeDefined();
     });
 
-    it('should generate validator that rejects additional properties', () => {
-      generateValidator(personSchema, 'Person', testOutputDir);
+    it('should generate validator that rejects additional properties', async () => {
+      await generateValidator('Person', testOutputDir, personSchemaPath);
 
       const testFile = join(testOutputDir, 'test-validator.ts');
       const testCode = `

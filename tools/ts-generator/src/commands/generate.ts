@@ -6,6 +6,7 @@ import { generatePackageJson } from '../generators/package-generator.js';
 import { generateTsConfig } from '../generators/tsconfig-generator.js';
 import { generateIndex } from '../generators/index-generator.js';
 import { generateReadme } from '../generators/readme-generator.js';
+import { generateValidationTypes } from '../generators/validation-types-generator.js';
 import { schemaFileToTypeName } from '../generators/typename-generator.js';
 
 export interface GenerateOptions {
@@ -44,6 +45,9 @@ export async function generate(
   mkdirSync(join(outputDir, 'types'), { recursive: true });
   mkdirSync(join(outputDir, 'validators'), { recursive: true });
 
+  console.log('Generating validation types...');
+  generateValidationTypes(outputDir);
+
   const typeNames: string[] = [];
 
   for (const schemaFile of schemaFiles) {
@@ -56,10 +60,10 @@ export async function generate(
     typeNames.push(typeName);
 
     console.log(`Generating types for ${typeName}...`);
-    await generateTypes(schema, typeName, outputDir);
+    await generateTypes(schema, typeName, outputDir, resolvedSchemasDir);
 
     console.log(`Generating validator for ${typeName}...`);
-    generateValidator(schema, typeName, outputDir);
+    await generateValidator(typeName, outputDir, schemaPath);
   }
 
   console.log('Generating package.json...');

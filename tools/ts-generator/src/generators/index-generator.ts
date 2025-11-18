@@ -10,7 +10,9 @@ export function generateIndex(typeNames: string[], outputDir: string): void {
     (name) => `export * from './validators/${name.toLowerCase()}.js';`
   );
 
-  const indexContent = [...typeExports, '', ...validatorExports].join('\n') + '\n';
+  const validationTypesExport = `export * from './validators/validation-types.js';`;
+
+  const indexContent = [...typeExports, '', validationTypesExport, ...validatorExports].join('\n') + '\n';
 
   const outputPath = join(outputDir, 'src', 'index.ts');
   writeFileSync(outputPath, indexContent);

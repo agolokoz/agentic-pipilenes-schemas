@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "type": { "const": "agent" },
+    "title": { "type": "string" },
+    "prompt": { "type": "string" },
+    "temperature": { "type": "number" }
+  },
+  "required": ["type", "title", "prompt"],
+  "additionalProperties": false
+}

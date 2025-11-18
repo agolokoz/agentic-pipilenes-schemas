@@ -29,6 +29,7 @@ describe('generateIndex', () => {
     const content = readFileSync(outputPath, 'utf-8');
 
     expect(content).toContain("export * from './types/person.js';");
+    expect(content).toContain("export * from './validators/validation-types.js';");
     expect(content).toContain("export * from './validators/person.js';");
   });
 
@@ -42,6 +43,7 @@ describe('generateIndex', () => {
     expect(content).toContain("export * from './types/person.js';");
     expect(content).toContain("export * from './types/company.js';");
     expect(content).toContain("export * from './types/product.js';");
+    expect(content).toContain("export * from './validators/validation-types.js';");
     expect(content).toContain("export * from './validators/person.js';");
     expect(content).toContain("export * from './validators/company.js';");
     expect(content).toContain("export * from './validators/product.js';");
@@ -58,12 +60,12 @@ describe('generateIndex', () => {
     const typeExportIndex = lines.findIndex((line) =>
       line.includes("export * from './types/person.js'")
     );
-    const validatorExportIndex = lines.findIndex((line) =>
-      line.includes("export * from './validators/person.js'")
+    const validationTypesIndex = lines.findIndex((line) =>
+      line.includes("export * from './validators/validation-types.js'")
     );
 
     expect(lines[typeExportIndex + 1]).toBe('');
-    expect(validatorExportIndex).toBe(typeExportIndex + 2);
+    expect(validationTypesIndex).toBe(typeExportIndex + 2);
   });
 
   it('should convert type names to lowercase in file paths', () => {
@@ -86,7 +88,7 @@ describe('generateIndex', () => {
 
     const content = readFileSync(outputPath, 'utf-8');
 
-    expect(content).toBe('\n');
+    expect(content).toContain("export * from './validators/validation-types.js';");
   });
 
   it('should end file with newline', () => {
