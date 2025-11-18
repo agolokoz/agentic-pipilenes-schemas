@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "$defs": {
+    "ifElseCase": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "output_port_id": { "type": "string" },
+        "predicate": { "$ref": "./common.schema.json#/$defs/expressionSpec" }
+      },
+      "required": ["label", "output_port_id", "predicate"],
+      "additionalProperties": false
+    },
+    "ifElseFallback": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "output_port_id": { "type": "string" }
+      },
+      "required": ["label", "output_port_id"],
+      "additionalProperties": false
+    },
+    "ifElseConfig": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "if_else" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ifElseCase" }
+        },
+        "fallback": { "$ref": "#/$defs/ifElseFallback" }
+      },
+      "required": ["kind", "cases"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "id": { "type": "string" },
+    "type": { "const": "if_else" },
+    "ports": {
+      "type": "array",
+      "items": { "$ref": "./common.schema.json#/$defs/port" }
+    },
+    "config": { "$ref": "#/$defs/ifElseConfig" }
+  },
+  "required": ["id", "type", "ports", "config"],
+  "additionalProperties": false
+}

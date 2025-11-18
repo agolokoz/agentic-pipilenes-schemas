@@ -1,12 +1,49 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
-  "properties": {
-    "type": { "const": "agent" },
-    "title": { "type": "string" },
-    "prompt": { "type": "string" },
-    "temperature": { "type": "number" }
+  "$defs": {
+    "agentConfig": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "agent" },
+        "agent_id": { "type": "string" },
+        "input_mapping": {
+          "$ref": "./common.schema.json#/$defs/inputMapping"
+        },
+        "output_mapping": {
+          "type": "object",
+          "properties": {
+            "to_state": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "required": ["to_state"],
+          "additionalProperties": false
+        },
+        "model": { "type": "string" },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "output_json": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": ["kind", "agent_id"],
+      "additionalProperties": false
+    }
   },
-  "required": ["type", "title", "prompt"],
+  "properties": {
+    "id": { "type": "string" },
+    "type": { "const": "agent" },
+    "ports": {
+      "type": "array",
+      "items": { "$ref": "./common.schema.json#/$defs/port" }
+    },
+    "config": { "$ref": "#/$defs/agentConfig" }
+  },
+  "required": ["id", "type", "ports", "config"],
   "additionalProperties": false
 }

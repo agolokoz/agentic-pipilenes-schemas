@@ -2,28 +2,27 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
   "$defs": {
-    "startConfig": {
+    "routerConfig": {
       "type": "object",
       "properties": {
-        "kind": { "const": "start" },
-        "initial_state": {
-          "type": "object",
-          "additionalProperties": true
+        "kind": { "const": "router" },
+        "router_id": { "type": "string" },
+        "input_mapping": {
+          "$ref": "./common.schema.json#/$defs/inputMapping"
         }
       },
-      "required": ["kind"],
+      "required": ["kind", "router_id"],
       "additionalProperties": false
     }
   },
   "properties": {
     "id": { "type": "string" },
-    "type": { "const": "start" },
+    "type": { "const": "router" },
     "ports": {
       "type": "array",
-      "items": { "$ref": "./common.schema.json#/$defs/port" },
-      "minItems": 1
+      "items": { "$ref": "./common.schema.json#/$defs/port" }
     },
-    "config": { "$ref": "#/$defs/startConfig" }
+    "config": { "$ref": "#/$defs/routerConfig" }
   },
   "required": ["id", "type", "ports", "config"],
   "additionalProperties": false

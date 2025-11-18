@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "$defs": {
+    "transformConfig": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "transform" },
+        "mode": { "const": "expression" },
+        "expr": { "$ref": "./common.schema.json#/$defs/expressionSpec" }
+      },
+      "required": ["kind", "mode", "expr"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "id": { "type": "string" },
+    "type": { "const": "transform" },
+    "ports": {
+      "type": "array",
+      "items": { "$ref": "./common.schema.json#/$defs/port" }
+    },
+    "config": { "$ref": "#/$defs/transformConfig" }
+  },
+  "required": ["id", "type", "ports", "config"],
+  "additionalProperties": false
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "$defs": {
+    "outputSelector": {
+      "type": "object",
+      "properties": {
+        "mode": { "enum": ["expression", "state"] },
+        "expression": {
+          "oneOf": [
+            { "type": "string" },
+            { "$ref": "./common.schema.json#/$defs/expressionSpec" }
+          ]
+        }
+      },
+      "required": ["mode"],
+      "additionalProperties": false
+    },
+    "endConfig": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "end" },
+        "output_selector": { "$ref": "#/$defs/outputSelector" }
+      },
+      "required": ["kind"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "id": { "type": "string" },
+    "type": { "const": "end" },
+    "ports": {
+      "type": "array",
+      "items": { "$ref": "./common.schema.json#/$defs/port" }
+    },
+    "config": { "$ref": "#/$defs/endConfig" }
+  },
+  "required": ["id", "type", "ports", "config"],
+  "additionalProperties": false
+}

@@ -2,13 +2,14 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
   "$defs": {
-    "startConfig": {
+    "approvalConfig": {
       "type": "object",
       "properties": {
-        "kind": { "const": "start" },
-        "initial_state": {
-          "type": "object",
-          "additionalProperties": true
+        "kind": { "const": "approval" },
+        "message": { "type": "string" },
+        "variable_mapping": {
+          "type": "array",
+          "items": { "$ref": "./common.schema.json#/$defs/namedExpression" }
         }
       },
       "required": ["kind"],
@@ -17,13 +18,12 @@
   },
   "properties": {
     "id": { "type": "string" },
-    "type": { "const": "start" },
+    "type": { "const": "approval" },
     "ports": {
       "type": "array",
-      "items": { "$ref": "./common.schema.json#/$defs/port" },
-      "minItems": 1
+      "items": { "$ref": "./common.schema.json#/$defs/port" }
     },
-    "config": { "$ref": "#/$defs/startConfig" }
+    "config": { "$ref": "#/$defs/approvalConfig" }
   },
   "required": ["id", "type", "ports", "config"],
   "additionalProperties": false
