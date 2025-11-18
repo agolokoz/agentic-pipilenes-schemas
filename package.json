@@ -6,5 +6,8 @@
   "scripts": {
     "build": "pnpm -r build",
     "generate": "pnpm --filter @trymirai/agentic-pipeline-schemas-ts-generator generate"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0"
   }
 }
