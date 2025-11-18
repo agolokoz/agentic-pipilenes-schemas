@@ -3,11 +3,11 @@ import { join } from 'path';
 
 export function generateIndex(typeNames: string[], outputDir: string): void {
   const typeExports = typeNames.map(
-    (name) => `export * from './types/${name.toLowerCase()}.js';`
+    (name) => `export { ${name} } from './types/${name.toLowerCase()}.js';`
   );
 
   const parserExports = typeNames.map(
-    (name) => `export * from './parsers/${name.toLowerCase()}.js';`
+    (name) => `export { parse${name} } from './parsers/${name.toLowerCase()}.js';`
   );
 
   const parsingTypesExport = `export * from './parsers/parsing-types.js';`;
