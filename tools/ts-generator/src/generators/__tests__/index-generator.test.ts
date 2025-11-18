@@ -28,9 +28,9 @@ describe('generateIndex', () => {
 
     const content = readFileSync(outputPath, 'utf-8');
 
-    expect(content).toContain("export * from './types/person.js';");
+    expect(content).toContain("export { Person } from './types/person.js';");
     expect(content).toContain("export * from './parsers/parsing-types.js';");
-    expect(content).toContain("export * from './parsers/person.js';");
+    expect(content).toContain("export { parsePerson } from './parsers/person.js';");
   });
 
   it('should generate index.ts with multiple type names', () => {
@@ -40,13 +40,13 @@ describe('generateIndex', () => {
 
     const content = readFileSync(outputPath, 'utf-8');
 
-    expect(content).toContain("export * from './types/person.js';");
-    expect(content).toContain("export * from './types/company.js';");
-    expect(content).toContain("export * from './types/product.js';");
+    expect(content).toContain("export { Person } from './types/person.js';");
+    expect(content).toContain("export { Company } from './types/company.js';");
+    expect(content).toContain("export { Product } from './types/product.js';");
     expect(content).toContain("export * from './parsers/parsing-types.js';");
-    expect(content).toContain("export * from './parsers/person.js';");
-    expect(content).toContain("export * from './parsers/company.js';");
-    expect(content).toContain("export * from './parsers/product.js';");
+    expect(content).toContain("export { parsePerson } from './parsers/person.js';");
+    expect(content).toContain("export { parseCompany } from './parsers/company.js';");
+    expect(content).toContain("export { parseProduct } from './parsers/product.js';");
   });
 
   it('should separate type exports from parser exports with empty line', () => {
@@ -58,7 +58,7 @@ describe('generateIndex', () => {
     const lines = content.split('\n');
 
     const typeExportIndex = lines.findIndex((line) =>
-      line.includes("export * from './types/person.js'")
+      line.includes("export { Person } from './types/person.js'")
     );
     const parsingTypesIndex = lines.findIndex((line) =>
       line.includes("export * from './parsers/parsing-types.js'")
@@ -75,10 +75,10 @@ describe('generateIndex', () => {
 
     const content = readFileSync(outputPath, 'utf-8');
 
-    expect(content).toContain("export * from './types/personprofile.js';");
-    expect(content).toContain("export * from './types/companyinfo.js';");
-    expect(content).toContain("export * from './parsers/personprofile.js';");
-    expect(content).toContain("export * from './parsers/companyinfo.js';");
+    expect(content).toContain("export { PersonProfile } from './types/personprofile.js';");
+    expect(content).toContain("export { CompanyInfo } from './types/companyinfo.js';");
+    expect(content).toContain("export { parsePersonProfile } from './parsers/personprofile.js';");
+    expect(content).toContain("export { parseCompanyInfo } from './parsers/companyinfo.js';");
   });
 
   it('should handle empty type names array', () => {
