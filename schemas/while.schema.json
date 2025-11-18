@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "$defs": {
+    "whileConfig": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "while" },
+        "condition": {
+          "oneOf": [
+            { "type": "string" },
+            { "$ref": "./common.schema.json#/$defs/expressionSpec" }
+          ]
+        },
+        "body": { "$ref": "./subgraph.schema.json" },
+        "max_iterations": { "type": "integer" }
+      },
+      "required": ["kind", "condition"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "id": { "type": "string" },
+    "type": { "const": "while" },
+    "ports": {
+      "type": "array",
+      "items": { "$ref": "./common.schema.json#/$defs/port" }
+    },
+    "config": { "$ref": "#/$defs/whileConfig" }
+  },
+  "required": ["id", "type", "ports", "config"],
+  "additionalProperties": false
+}

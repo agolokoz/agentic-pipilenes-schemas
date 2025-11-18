@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "$defs": {
+    "node": {
+      "oneOf": [
+        { "$ref": "./start.schema.json" },
+        { "$ref": "./agent.schema.json" },
+        { "$ref": "./router.schema.json" },
+        { "$ref": "./classifier.schema.json" },
+        { "$ref": "./if_else.schema.json" },
+        { "$ref": "./transform.schema.json" },
+        { "$ref": "./set_state.schema.json" },
+        { "$ref": "./approval.schema.json" },
+        { "$ref": "./end.schema.json" }
+      ]
+    },
+    "edge": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "source_node_id": { "type": "string" },
+        "source_port_id": { "type": "string" },
+        "target_node_id": { "type": "string" },
+        "target_port_id": { "type": "string" }
+      },
+      "required": [
+        "id",
+        "source_node_id",
+        "source_port_id",
+        "target_node_id",
+        "target_port_id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    }
+  },
+  "required": ["nodes", "edges"],
+  "additionalProperties": false
+}

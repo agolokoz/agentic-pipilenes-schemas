@@ -1,17 +1,37 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "pipeline": {
-      "type": "array",
-      "items": {
-        "oneOf": [
-          { "$ref": "./start.schema.json" },
-          { "$ref": "./agent.schema.json" }
-        ]
-      }
-    }
+    "id": { "type": "string" },
+    "schema_version": { "type": "string" },
+    "start_node_id": { "type": "string" },
+    "input_variable_json_schema": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "state_schema": {
+      "type": "object",
+      "properties": {
+        "variables": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": ["variables"],
+      "additionalProperties": false
+    },
+    "graph": { "$ref": "./graph.schema.json" }
   },
-  "required": ["pipeline"],
+  "required": [
+    "id",
+    "schema_version",
+    "start_node_id",
+    "input_variable_json_schema",
+    "state_schema",
+    "graph"
+  ],
   "additionalProperties": false
 }

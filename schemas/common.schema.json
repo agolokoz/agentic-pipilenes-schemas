@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "port": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "direction": { "enum": ["input", "output"] }
+      },
+      "required": ["id", "direction"],
+      "additionalProperties": false
+    },
+    "expressionSpec": {
+      "type": "object",
+      "properties": {
+        "expression": { "type": "string" },
+        "format": { "type": "string" }
+      },
+      "required": ["expression", "format"],
+      "additionalProperties": false
+    },
+    "inputMapping": {
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "required": ["fields"],
+      "additionalProperties": false
+    },
+    "namedExpression": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "expression": { "$ref": "#/$defs/expressionSpec" }
+      },
+      "required": ["name", "expression"],
+      "additionalProperties": false
+    }
+  }
+}
