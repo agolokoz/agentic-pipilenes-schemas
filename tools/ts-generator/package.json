@@ -1,5 +1,5 @@
 {
-  "name": "@agentic-pipeline-schemas/ts-generator",
+  "name": "@trymirai/agentic-pipeline-schemas-ts-generator",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
