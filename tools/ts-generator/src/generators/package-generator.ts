@@ -1,7 +1,11 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
-export function generatePackageJson(outputDir: string, version: string, packageName: string): void {
+export function generatePackageJson(
+  outputDir: string,
+  version: string,
+  packageName: string
+): void {
   const packageJson = {
     name: packageName,
     version,
@@ -9,7 +13,7 @@ export function generatePackageJson(outputDir: string, version: string, packageN
     main: 'dist/index.js',
     types: 'dist/index.d.ts',
     scripts: {
-      build: 'tsc && cp -r src/schemas dist/',
+      build: 'tsc',
     },
     dependencies: {
       ajv: '^8.17.0',
