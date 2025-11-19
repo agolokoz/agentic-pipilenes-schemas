@@ -28,9 +28,9 @@ describe('generateIndex', () => {
 
     const content = readFileSync(outputPath, 'utf-8');
 
-    expect(content).toContain("export { Person } from './types/person.js';");
+    expect(content).toContain("export * from './types/index.js';");
     expect(content).toContain("export * from './parsers/parsing-types.js';");
-    expect(content).toContain("export { parsePerson } from './parsers/person.js';");
+    expect(content).toContain("export { parse, type TypeMap } from './parsers/index.js';");
   });
 
   it('should generate index.ts with multiple type names', () => {
@@ -40,13 +40,9 @@ describe('generateIndex', () => {
 
     const content = readFileSync(outputPath, 'utf-8');
 
-    expect(content).toContain("export { Person } from './types/person.js';");
-    expect(content).toContain("export { Company } from './types/company.js';");
-    expect(content).toContain("export { Product } from './types/product.js';");
+    expect(content).toContain("export * from './types/index.js';");
     expect(content).toContain("export * from './parsers/parsing-types.js';");
-    expect(content).toContain("export { parsePerson } from './parsers/person.js';");
-    expect(content).toContain("export { parseCompany } from './parsers/company.js';");
-    expect(content).toContain("export { parseProduct } from './parsers/product.js';");
+    expect(content).toContain("export { parse, type TypeMap } from './parsers/index.js';");
   });
 
   it('should separate type exports from parser exports with empty line', () => {
@@ -58,7 +54,7 @@ describe('generateIndex', () => {
     const lines = content.split('\n');
 
     const typeExportIndex = lines.findIndex((line) =>
-      line.includes("export { Person } from './types/person.js'")
+      line.includes("export * from './types/index.js'")
     );
     const parsingTypesIndex = lines.findIndex((line) =>
       line.includes("export * from './parsers/parsing-types.js'")
@@ -68,17 +64,16 @@ describe('generateIndex', () => {
     expect(parsingTypesIndex).toBe(typeExportIndex + 2);
   });
 
-  it('should convert type names to lowercase in file paths', () => {
+  it('should generate consistent exports regardless of type name casing', () => {
     const typeNames = ['PersonProfile', 'CompanyInfo'];
 
     generateIndex(typeNames, testOutputDir);
 
     const content = readFileSync(outputPath, 'utf-8');
 
-    expect(content).toContain("export { PersonProfile } from './types/personprofile.js';");
-    expect(content).toContain("export { CompanyInfo } from './types/companyinfo.js';");
-    expect(content).toContain("export { parsePersonProfile } from './parsers/personprofile.js';");
-    expect(content).toContain("export { parseCompanyInfo } from './parsers/companyinfo.js';");
+    expect(content).toContain("export * from './types/index.js';");
+    expect(content).toContain("export * from './parsers/parsing-types.js';");
+    expect(content).toContain("export { parse, type TypeMap } from './parsers/index.js';");
   });
 
   it('should handle empty type names array', () => {
