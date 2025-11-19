@@ -15,7 +15,7 @@ export async function bundleAllSchemas(
     .sort();
 
   const wrapperSchema: Record<string, unknown> = {
-    $schema: 'https://json-schema.org/draft-07/schema#',
+    $schema: 'http://json-schema.org/draft-07/schema',
     $defs: {},
   };
 

@@ -2,52 +2,48 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 
 export async function generateBundledParser(
+  bundledSchema: Record<string, unknown>,
   typeNames: string[],
+  schemaFiles: string[],
   outputDir: string
 ): Promise<void> {
-  const typeMapEntries: string[] = [];
-  const schemaImports: string[] = [];
+  const typeMapEntries = typeNames.map((typeName) => {
+    return `  ${typeName}: ${typeName};`;
+  });
 
-  for (const typeName of typeNames) {
-    typeMapEntries.push(`  ${typeName}: ${typeName};`);
-    schemaImports.push(
-      `import ${typeName}Schema from '../schemas/${typeName.toLowerCase()}.json' assert { type: 'json' };`
-    );
-  }
+  const schemaRefEntries = typeNames.map((typeName, index) => {
+    const schemaFile = schemaFiles[index];
+    const schemaKey = schemaFile.replace('.schema.json', '');
+    return `  ${typeName}: '${schemaKey}',`;
+  });
+
+  const bundledSchemaString = JSON.stringify(bundledSchema, null, 2);
 
   const parserCode = `import Ajv, { type ValidateFunction } from 'ajv';
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
 import type {
 ${typeNames.map((name) => `  ${name}`).join(',\n')}
 } from '../types/index.js';
 import type { ParsingResult, ParsingError } from './parsing-types.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const bundledSchema = ${bundledSchemaString};
+
+const ajv = new Ajv({ allErrors: true });
+ajv.addSchema(bundledSchema, 'schemas');
 
 export interface TypeMap {
 ${typeMapEntries.join('\n')}
 }
 
-const schemaCache: Partial<Record<keyof TypeMap, any>> = {};
+const schemaRefs = {
+${schemaRefEntries.join('\n')}
+} as const;
 
-function loadSchema<K extends keyof TypeMap>(type: K): any {
-  if (!schemaCache[type]) {
-    const schemaPath = join(__dirname, '../schemas', \`\${String(type).toLowerCase()}.json\`);
-    const schemaContent = readFileSync(schemaPath, 'utf-8');
-    schemaCache[type] = JSON.parse(schemaContent);
-  }
-  return schemaCache[type];
-}
-
-const ajv = new Ajv({ allErrors: true });
 const validators: { [K in keyof TypeMap]?: ValidateFunction } = {};
 
 function getValidator<K extends keyof TypeMap>(type: K): ValidateFunction {
   if (!validators[type]) {
-    const schema = loadSchema(type);
-    validators[type] = ajv.compile(schema);
+    const schemaKey = schemaRefs[type];
+    validators[type] = ajv.compile({ $ref: \`schemas#/$defs/\${schemaKey}\` });
   }
   return validators[type]!;
 }

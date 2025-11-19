@@ -3,7 +3,6 @@ import { join, resolve } from 'path';
 import { bundleAllSchemas } from '../generators/schema-bundler.js';
 import { generateBundledTypes } from '../generators/bundled-type-generator.js';
 import { generateBundledParser } from '../generators/bundled-parser-generator.js';
-import { copyDereferencedSchemas } from '../generators/schema-copy-generator.js';
 import { generatePackageJson } from '../generators/package-generator.js';
 import { generateTsConfig } from '../generators/tsconfig-generator.js';
 import { generateIndex } from '../generators/index-generator.js';
@@ -56,16 +55,8 @@ export async function generate(
 
   const typeNames = schemaFiles.map((file) => schemaFileToTypeName(file));
 
-  console.log('Copying dereferenced schemas...');
-  await copyDereferencedSchemas(
-    resolvedSchemasDir,
-    schemaFiles,
-    typeNames,
-    outputDir
-  );
-
   console.log('Generating unified parser...');
-  await generateBundledParser(typeNames, outputDir);
+  await generateBundledParser(bundledSchema, typeNames, schemaFiles, outputDir);
 
   console.log('Generating package.json...');
   generatePackageJson(outputPackageDir, options.version, options.packageName);
