@@ -25,6 +25,7 @@ export function generateTsConfig(outputDir: string): void {
       esModuleInterop: true,
       skipLibCheck: true,
       forceConsistentCasingInFileNames: true,
+      resolveJsonModule: true,
     },
     include: ['src/**/*'],
     exclude: ['node_modules', 'dist'],

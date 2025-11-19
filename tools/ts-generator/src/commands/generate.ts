@@ -1,7 +1,9 @@
-import { readdirSync, readFileSync, mkdirSync } from 'fs';
+import { mkdirSync } from 'fs';
 import { join, resolve } from 'path';
-import { generateTypes } from '../generators/type-generator.js';
-import { generateParser } from '../generators/parser-generator.js';
+import { bundleAllSchemas } from '../generators/schema-bundler.js';
+import { generateBundledTypes } from '../generators/bundled-type-generator.js';
+import { generateBundledParser } from '../generators/bundled-parser-generator.js';
+import { copyDereferencedSchemas } from '../generators/schema-copy-generator.js';
 import { generatePackageJson } from '../generators/package-generator.js';
 import { generateTsConfig } from '../generators/tsconfig-generator.js';
 import { generateIndex } from '../generators/index-generator.js';
@@ -29,8 +31,12 @@ export async function generate(
     console.log(`Output directory: ${outputPackageDir}`);
   }
 
-  const schemaFiles = readdirSync(resolvedSchemasDir).filter((file) =>
-    file.endsWith('.schema.json')
+  mkdirSync(join(outputDir, 'types'), { recursive: true });
+  mkdirSync(join(outputDir, 'parsers'), { recursive: true });
+
+  console.log('Bundling all schemas...');
+  const { schema: bundledSchema, schemaFiles } = await bundleAllSchemas(
+    resolvedSchemasDir
   );
 
   if (schemaFiles.length === 0) {
@@ -42,29 +48,24 @@ export async function generate(
     console.log(`Found ${schemaFiles.length} schema file(s)`);
   }
 
-  mkdirSync(join(outputDir, 'types'), { recursive: true });
-  mkdirSync(join(outputDir, 'parsers'), { recursive: true });
+  console.log('Generating TypeScript types...');
+  await generateBundledTypes(bundledSchema, outputDir);
 
   console.log('Generating parsing types...');
   generateParsingTypes(outputDir);
 
-  const typeNames: string[] = [];
+  const typeNames = schemaFiles.map((file) => schemaFileToTypeName(file));
 
-  for (const schemaFile of schemaFiles) {
-    const schemaPath = join(resolvedSchemasDir, schemaFile);
-    const schemaContent = readFileSync(schemaPath, 'utf-8');
-    const schema = JSON.parse(schemaContent) as Record<string, unknown>;
+  console.log('Copying dereferenced schemas...');
+  await copyDereferencedSchemas(
+    resolvedSchemasDir,
+    schemaFiles,
+    typeNames,
+    outputDir
+  );
 
-    const typeName = schemaFileToTypeName(schemaFile);
-
-    typeNames.push(typeName);
-
-    console.log(`Generating types for ${typeName}...`);
-    await generateTypes(schema, typeName, outputDir, resolvedSchemasDir);
-
-    console.log(`Generating parser for ${typeName}...`);
-    await generateParser(typeName, outputDir, schemaPath);
-  }
+  console.log('Generating unified parser...');
+  await generateBundledParser(typeNames, outputDir);
 
   console.log('Generating package.json...');
   generatePackageJson(outputPackageDir, options.version, options.packageName);

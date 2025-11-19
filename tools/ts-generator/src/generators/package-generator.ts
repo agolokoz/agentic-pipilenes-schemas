@@ -9,10 +9,11 @@ export function generatePackageJson(outputDir: string, version: string, packageN
     main: 'dist/index.js',
     types: 'dist/index.d.ts',
     scripts: {
-      build: 'tsc',
+      build: 'tsc && cp -r src/schemas dist/',
     },
     dependencies: {
       ajv: '^8.17.0',
+      '@types/node': '^22.0.0',
     },
     devDependencies: {
       typescript: '^5.6.0',
