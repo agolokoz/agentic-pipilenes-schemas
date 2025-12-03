@@ -144,3 +144,4 @@ packages/
 target/
 
 .idea/
+bundled.schema.json

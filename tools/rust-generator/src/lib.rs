@@ -63,7 +63,6 @@ where T: serde::de::Deserialize<'a>
 
 "#.to_string();
     lib_rs_content.push_str(&tests_content);
-
     let lib_rs_path = src_path_buf.clone().join("lib.rs");
     let mut lib_rs_file = File::create(lib_rs_path)?;
     lib_rs_file.write_all(lib_rs_content.as_bytes())?;
@@ -87,20 +86,20 @@ pub fn get_bundled_schema(
             file_name_str.ends_with(".schema.json") && !skip_paths.contains(file_name)
         }).collect::<Vec<OsString>>();
 
-    let mut docs: HashMap<String, Value> = HashMap::new();
+    let mut schemas: HashMap<String, Value> = HashMap::new();
     for file_name in file_names {
         let key = file_name.to_str().unwrap().trim_end_matches(".schema.json").to_string();
         let path = PathBuf::from(&schemas_path).join(file_name);
         let file = File::open(&path).unwrap();
         let schema_value: Value = serde_json::from_reader(file).unwrap();
-        docs.insert(key, schema_value);
+        schemas.insert(key, schema_value);
     }
 
     // Build definitions with rewritten documents and hoisted local definitions
     let mut defs = serde_json::Map::new();
-    for (key, doc) in &docs {
+    for (key, schema) in &schemas {
         let mut hoisted_defs = serde_json::Map::new();
-        let transformed = transform(doc, key, &mut hoisted_defs);
+        let transformed = transform(schema, key, &mut hoisted_defs);
         defs.insert(key.clone(), transformed);
         for (k, v) in hoisted_defs.into_iter() {
             defs.insert(k, v);
@@ -109,7 +108,7 @@ pub fn get_bundled_schema(
 
     let bundled: Value = json!({
         "$schema": "http://json-schema.org/draft-07/schema",
-        "definitions": defs,
+        "$defs": defs,
     });
 
     Ok(bundled)
@@ -119,16 +118,16 @@ pub fn generate_rs_structures(
     schema: Value,
     output_path: &OsString,
 ) -> Result<(), Box<dyn Error>> {
-    let root_schema: RootSchema = serde_json::from_value(schema)?;
     let mut type_space_settings = typify::TypeSpaceSettings::default();
     type_space_settings.with_unknown_crates(typify::UnknownPolicy::Allow);
     type_space_settings.with_struct_builder(false);
     type_space_settings.with_derive("PartialEq".to_string());
 
-    let mut typespace = typify::TypeSpace::new(&type_space_settings);
-    typespace.add_root_schema(root_schema)?;
+    let mut type_space = typify::TypeSpace::new(&type_space_settings);
+    let root_schema: RootSchema = serde_json::from_value(schema)?;
+    type_space.add_root_schema(root_schema)?;
 
-    let type_space_file = syn::parse2::<syn::File>(typespace.to_stream())?;
+    let type_space_file = syn::parse2::<syn::File>(type_space.to_stream())?;
     let mut code = prettyplease::unparse(&type_space_file);
     code = cleanup_rs_code(&code);
 
@@ -140,7 +139,7 @@ pub fn generate_rs_structures(
 }
 
 fn cleanup_rs_code(code: &str) -> String {
-    let code = cleanup_comment(code);
+    let code = cleanup_comment_blocks(code);
     code.replace("::std::convert::From", "From")
         .replace("::std::convert::TryFrom", "TryFrom")
         .replace("::std::option::Option", "Option")
@@ -150,7 +149,7 @@ fn cleanup_rs_code(code: &str) -> String {
         .replace(" ::", " ")
 }
 
-fn cleanup_comment(input: &str) -> String {
+fn cleanup_comment_blocks(input: &str) -> String {
     let mut result = String::new();
     let mut in_comment_block = false;
     let mut first_comment_block = true;
@@ -159,6 +158,7 @@ fn cleanup_comment(input: &str) -> String {
         if line.starts_with("///") {
             if !in_comment_block {
                 in_comment_block = true;
+                // prevent '\n' at the first file line
                 if first_comment_block {
                     first_comment_block = false;
                 } else {
@@ -186,11 +186,10 @@ fn transform(
         Value::Object(map) => {
             let mut out = serde_json::Map::with_capacity(map.len());
             for (k, v) in map.iter() {
-                if k == "$defs" || k == "definitions" {
+                if k == "$defs" {
                     if let Value::Object(defs_map) = v {
                         for (def_name, def_val) in defs_map.iter() {
                             let rewritten_def = transform(def_val, current_doc, hoisted);
-                            // hoisted.insert(format!("{current_doc}.{def_name}"), rewritten_def);
                             hoisted.insert(format!("{def_name}"), rewritten_def);
                         }
                     }
@@ -224,17 +223,15 @@ fn rewrite_ref_target(s: &str, current_doc: &str) -> String {
         let base = file_part.trim_end_matches(".schema.json");
         if let Some(frag) = frag_opt {
             let frag = frag.trim_start_matches('/');
-            if let Some(name) = frag.strip_prefix("$defs/").or_else(|| frag.strip_prefix("definitions/")) {
-                // return format!("#/definitions/{base}.{name}");
+            if let Some(name) = frag.strip_prefix("$defs/") {
                 return format!("#/$defs/{name}");
             }
         }
-        return format!("#/definitions/{}", base);
+        return format!("#/$defs/{}", base);
     }
     if let Some(frag) = s.strip_prefix('#') {
         let frag = frag.trim_start_matches('/');
-        if let Some(name) = frag.strip_prefix("$defs/").or_else(|| frag.strip_prefix("definitions/")) {
-            // return format!("#/definitions/{current_doc}.{name}");
+        if let Some(name) = frag.strip_prefix("$defs/") {
             return format!("#/$defs/{name}");
         }
         return s.to_string();
