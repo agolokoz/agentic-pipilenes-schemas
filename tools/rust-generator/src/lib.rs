@@ -2,7 +2,7 @@ use schemars::schema::RootSchema;
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -12,6 +12,11 @@ pub struct CrateStructure {
     pub src_path: OsString,
 }
 
+/// Generates crate files structure:
+/// ./rust/
+///     Cargo.toml
+///     src/
+///         lib.rs
 pub fn generate_crate_structure(
     generator_src_path: &OsString,
     path: &OsString,
@@ -46,12 +51,6 @@ serde_json = "1.0.145"
     let src_path = src_path_buf.as_path();
     let _ = std::fs::create_dir_all(src_path)?;
 
-    // get tests content
-    let tests_rs_file_path = PathBuf::from(generator_src_path).join("tests.rs");
-    let mut tests_rs_file = File::open(&tests_rs_file_path)?;
-    let mut tests_content = String::new();
-    tests_rs_file.read_to_string(&mut tests_content)?;
-
     // ./rust/src/lib.rs
     let mut lib_rs_content = r#"pub mod types;
 
@@ -62,6 +61,7 @@ where T: serde::de::Deserialize<'a>
 }
 
 "#.to_string();
+    let tests_content = get_file_content(PathBuf::from(generator_src_path).join("tests.rs").as_os_str())?;
     lib_rs_content.push_str(&tests_content);
     let lib_rs_path = src_path_buf.clone().join("lib.rs");
     let mut lib_rs_file = File::create(lib_rs_path)?;
@@ -73,9 +73,11 @@ where T: serde::de::Deserialize<'a>
     })
 }
 
+/// Accumulates all *.schema.json files from [schemas_path] without [skip_file_names]
+/// into one JSON schema
 pub fn get_bundled_schema(
     schemas_path: &OsString,
-    skip_paths: &HashSet<OsString>
+    skip_file_names: &HashSet<OsString>
 ) -> Result<Value, Box<dyn Error>> {
     let schemas_entries = std::fs::read_dir(&schemas_path)?;
 
@@ -83,7 +85,7 @@ pub fn get_bundled_schema(
         .map(|entry| entry.unwrap().file_name())
         .filter(|file_name| {
             let file_name_str = file_name.to_str().unwrap();
-            file_name_str.ends_with(".schema.json") && !skip_paths.contains(file_name)
+            file_name_str.ends_with(".schema.json") && !skip_file_names.contains(file_name)
         }).collect::<Vec<OsString>>();
 
     let mut schemas: HashMap<String, Value> = HashMap::new();
@@ -114,6 +116,7 @@ pub fn get_bundled_schema(
     Ok(bundled)
 }
 
+/// Generates Rust types from [schema] and saves them to [output_path]/types.rs
 pub fn generate_rs_structures(
     schema: Value,
     output_path: &OsString,
@@ -237,4 +240,11 @@ fn rewrite_ref_target(s: &str) -> String {
         return s.to_string();
     }
     s.to_string()
+}
+
+fn get_file_content(filepath: &OsStr) -> Result<String, Box<dyn Error>> {
+    let mut file = File::open(filepath)?;
+    let mut content = String::new();
+    file.read_to_string(&mut content)?;
+    Ok(content)
 }
