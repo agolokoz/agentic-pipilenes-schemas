@@ -1,11 +1,11 @@
+use schemars::schema::RootSchema;
+use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::ffi::OsString;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::PathBuf;
-use schemars::schema::RootSchema;
-use serde_json::{json, Value};
 
 pub struct CrateStructure {
     pub crate_path: OsString,
@@ -13,6 +13,7 @@ pub struct CrateStructure {
 }
 
 pub fn generate_crate_structure(
+    generator_src_path: &OsString,
     path: &OsString,
     package_name: &String,
     package_version: &String
@@ -34,7 +35,7 @@ version = "{package_version}"
 edition = "2024"
 
 [dependencies]
-serde = {{ version = "1.0", features = ["derive"] }}
+serde = {{ version = "1.0.228", features = ["derive"] }}
 serde_json = "1.0.145"
 "#);
     cargo_toml_file.write_all(cargo_toml_content.as_bytes())?;
@@ -44,6 +45,28 @@ serde_json = "1.0.145"
     src_path_buf.push("src");
     let src_path = src_path_buf.as_path();
     let _ = std::fs::create_dir_all(src_path)?;
+
+    // get tests content
+    let tests_rs_file_path = PathBuf::from(generator_src_path).join("tests.rs");
+    let mut tests_rs_file = File::open(&tests_rs_file_path)?;
+    let mut tests_content = String::new();
+    tests_rs_file.read_to_string(&mut tests_content)?;
+
+    // ./rust/src/lib.rs
+    let mut lib_rs_content = r#"pub mod types;
+
+pub fn parse_json<'a, T>(json: &'a str) -> serde_json::Result<T>
+where T: serde::de::Deserialize<'a>
+{
+    serde_json::from_str(json)
+}
+
+"#.to_string();
+    lib_rs_content.push_str(&tests_content);
+
+    let lib_rs_path = src_path_buf.clone().join("lib.rs");
+    let mut lib_rs_file = File::create(lib_rs_path)?;
+    lib_rs_file.write_all(lib_rs_content.as_bytes())?;
 
     Ok(CrateStructure {
         crate_path: crate_path.as_os_str().to_os_string(),
@@ -100,18 +123,56 @@ pub fn generate_rs_structures(
     let mut type_space_settings = typify::TypeSpaceSettings::default();
     type_space_settings.with_unknown_crates(typify::UnknownPolicy::Allow);
     type_space_settings.with_struct_builder(false);
+    type_space_settings.with_derive("PartialEq".to_string());
 
     let mut typespace = typify::TypeSpace::new(&type_space_settings);
     typespace.add_root_schema(root_schema)?;
 
     let type_space_file = syn::parse2::<syn::File>(typespace.to_stream())?;
-    let code = prettyplease::unparse(&type_space_file);
+    let mut code = prettyplease::unparse(&type_space_file);
+    code = cleanup_rs_code(&code);
 
-    let lib_rs_path = PathBuf::from(output_path).join("lib.rs");
-    let mut lib_rs_file = File::create(lib_rs_path)?;
-    lib_rs_file.write_all(code.as_bytes())?;
+    let types_rs_path = PathBuf::from(output_path).join("types.rs");
+    let mut types_rs_file = File::create(types_rs_path)?;
+    types_rs_file.write_all(code.as_bytes())?;
 
     Ok(())
+}
+
+fn cleanup_rs_code(code: &str) -> String {
+    let code = cleanup_comment(code);
+    code.replace("::std::convert::From", "From")
+        .replace("::std::convert::TryFrom", "TryFrom")
+        .replace("::std::option::Option", "Option")
+        .replace("::std::result::Result", "Result")
+        .replace("::std::string::String", "String")
+        .replace("::std::vec::Vec", "Vec")
+        .replace(" ::", " ")
+}
+
+fn cleanup_comment(input: &str) -> String {
+    let mut result = String::new();
+    let mut in_comment_block = false;
+    let mut first_comment_block = true;
+
+    for line in input.lines() {
+        if line.starts_with("///") {
+            if !in_comment_block {
+                in_comment_block = true;
+                if first_comment_block {
+                    first_comment_block = false;
+                } else {
+                    result.push('\n');
+                }
+            }
+        } else {
+            in_comment_block = false;
+            result.push_str(line);
+            result.push('\n');
+        }
+    }
+
+    result
 }
 
 // Transform a schema document by hoisting any local definitions to the top-level
@@ -129,7 +190,8 @@ fn transform(
                     if let Value::Object(defs_map) = v {
                         for (def_name, def_val) in defs_map.iter() {
                             let rewritten_def = transform(def_val, current_doc, hoisted);
-                            hoisted.insert(format!("{}.{}", current_doc, def_name), rewritten_def);
+                            // hoisted.insert(format!("{current_doc}.{def_name}"), rewritten_def);
+                            hoisted.insert(format!("{def_name}"), rewritten_def);
                         }
                     }
                     continue; // drop nested defs
@@ -163,7 +225,8 @@ fn rewrite_ref_target(s: &str, current_doc: &str) -> String {
         if let Some(frag) = frag_opt {
             let frag = frag.trim_start_matches('/');
             if let Some(name) = frag.strip_prefix("$defs/").or_else(|| frag.strip_prefix("definitions/")) {
-                return format!("#/definitions/{}.{}", base, name);
+                // return format!("#/definitions/{base}.{name}");
+                return format!("#/$defs/{name}");
             }
         }
         return format!("#/definitions/{}", base);
@@ -171,7 +234,8 @@ fn rewrite_ref_target(s: &str, current_doc: &str) -> String {
     if let Some(frag) = s.strip_prefix('#') {
         let frag = frag.trim_start_matches('/');
         if let Some(name) = frag.strip_prefix("$defs/").or_else(|| frag.strip_prefix("definitions/")) {
-            return format!("#/definitions/{}.{}", current_doc, name);
+            // return format!("#/definitions/{current_doc}.{name}");
+            return format!("#/$defs/{name}");
         }
         return s.to_string();
     }
