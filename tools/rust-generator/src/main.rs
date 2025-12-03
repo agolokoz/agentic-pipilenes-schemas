@@ -32,6 +32,12 @@ struct Args {
     verbose: bool
 }
 
+// cargo run -- \
+//  -i ../../schemas \
+//  -o ../../packages \
+//  --package-name agentic-pipeline-schemas \
+//  --package-version "0.0.1" \
+//  -v
 fn main() {
     let args = Args::parse();
     if args.verbose {
@@ -59,16 +65,16 @@ fn main() {
         .unwrap_or_else(|err| panic!("Failed to get bundled schema: {err}"));
 
     // for debugging purposes: save bundled schema to [bundled_file_name]
-    // let bundled_schema_filepath = PathBuf::from(&args.input).join(bundled_file_name);
-    // let mut file = File::create(&bundled_schema_filepath)
-    //     .unwrap_or_else(|err| {
-    //         let filepath = bundled_schema_filepath.to_str().unwrap();
-    //         panic!("Failed to create bundled schema file {filepath}: {err}")
-    //     });
-    // let serialized = serde_json::to_string_pretty(&bundled_schema)
-    //     .unwrap_or_else(|err| panic!("Failed to serialize bundled schema: {err}"));
-    // file.write_all(serialized.as_bytes())
-    //     .unwrap_or_else(|err| panic!("Failed to write bundled schema to file: {err}"));
+    let bundled_schema_filepath = PathBuf::from(&args.input).join(bundled_file_name);
+    let mut file = File::create(&bundled_schema_filepath)
+        .unwrap_or_else(|err| {
+            let filepath = bundled_schema_filepath.to_str().unwrap();
+            panic!("Failed to create bundled schema file {filepath}: {err}")
+        });
+    let serialized = serde_json::to_string_pretty(&bundled_schema)
+        .unwrap_or_else(|err| panic!("Failed to serialize bundled schema: {err}"));
+    file.write_all(serialized.as_bytes())
+        .unwrap_or_else(|err| panic!("Failed to write bundled schema to file: {err}"));
 
     if args.verbose {
         println!("Generating rust structures...");

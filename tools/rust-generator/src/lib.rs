@@ -197,7 +197,7 @@ fn transform(
                 }
                 if k == "$ref" {
                     if let Value::String(s) = v {
-                        let new_ref = rewrite_ref_target(s, current_doc);
+                        let new_ref = rewrite_ref_target(s);
                         out.insert(k.clone(), Value::String(new_ref));
                         continue;
                     }
@@ -213,7 +213,7 @@ fn transform(
     }
 }
 
-fn rewrite_ref_target(s: &str, current_doc: &str) -> String {
+fn rewrite_ref_target(s: &str) -> String {
     if let Some(rest) = s.strip_prefix("./") {
         let (file_part, frag_opt) = match rest.split_once('#') {
             Some((file, frag)) => (file, Some(frag)),
