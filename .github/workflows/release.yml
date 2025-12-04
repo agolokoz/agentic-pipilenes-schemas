@@ -86,12 +86,7 @@ jobs:
       - name: Install Rust
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            rust
-
-      - name: Install dependencies
-        run: cargo install --locked
-        working-directory: tools/rust-generator
+          workspaces: rust
 
       - name: Generate crate
         run: |

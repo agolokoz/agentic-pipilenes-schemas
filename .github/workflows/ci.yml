@@ -38,7 +38,7 @@ jobs:
         run: pnpm build
         working-directory: tools/ts-generator
 
-  test-and-build-rust:
+  build-rust-crate-generator:
     runs-on: ubuntu-latest
 
     steps:
@@ -48,9 +48,8 @@ jobs:
       - name: Install Rust
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            rust
+          workspaces: rust
 
-      - name: Generate crate
+      - name: Build crate generator
         run: cargo build
         working-directory: tools/rust-generator
