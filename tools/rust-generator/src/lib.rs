@@ -15,6 +15,7 @@ pub struct CrateStructure {
 /// Generates crate files structure:
 /// ./rust/
 ///     Cargo.toml
+///     README.md
 ///     src/
 ///         lib.rs
 pub fn generate_crate_structure(
@@ -35,15 +36,28 @@ pub fn generate_crate_structure(
     let cargo_toml_path = cargo_toml_path_buf.as_path();
     let mut cargo_toml_file = File::create(cargo_toml_path)?;
     let cargo_toml_content = format!(r#"[package]
-name = "{package_name}"
+name = "{package_name}-dev"
 version = "{package_version}"
 edition = "2024"
+description = "Rust types and parser generated from JSON schemas"
+homepage = "https://github.com/agolokoz/agentic-pipilenes-schemas"
+repository = "https://github.com/agolokoz/agentic-pipilenes-schemas"
+license = "MIT"
+readme = "README.md"
 
 [dependencies]
 serde = {{ version = "1.0.228", features = ["derive"] }}
 serde_json = "1.0.145"
 "#);
     cargo_toml_file.write_all(cargo_toml_content.as_bytes())?;
+
+    // ./rust/README.md
+    let mut readme_path_buf = crate_path_buf.clone();
+    readme_path_buf.push("README.md");
+    let readme_path = readme_path_buf.as_path();
+    let mut readme_file = File::create(readme_path)?;
+    let readme_content = format!(r#"# Rust types and parser generated from JSON schemas."#);
+    readme_file.write_all(readme_content.as_bytes())?;
 
     // ./rust/src
     let mut src_path_buf = crate_path_buf.clone();
