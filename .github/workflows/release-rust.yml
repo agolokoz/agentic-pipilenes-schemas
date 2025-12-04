@@ -21,7 +21,7 @@ jobs:
         with:
           workspaces: rust
 
-      - name: Generate crate
+      - name: Generate Rust crate
         run: |
           cargo run -- \
             -i ../../schemas \

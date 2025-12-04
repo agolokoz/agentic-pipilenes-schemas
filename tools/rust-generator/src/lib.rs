@@ -1,6 +1,6 @@
 use schemars::schema::RootSchema;
 use serde_json::{json, Value};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::error::Error;
 use std::ffi::{OsStr, OsString};
 use std::fs::File;
@@ -81,14 +81,16 @@ pub fn get_bundled_schema(
 ) -> Result<Value, Box<dyn Error>> {
     let schemas_entries = std::fs::read_dir(&schemas_path)?;
 
-    let file_names = schemas_entries
+    let mut file_names = schemas_entries
         .map(|entry| entry.unwrap().file_name())
         .filter(|file_name| {
             let file_name_str = file_name.to_str().unwrap();
             file_name_str.ends_with(".schema.json") && !skip_file_names.contains(file_name)
-        }).collect::<Vec<OsString>>();
+        })
+        .collect::<Vec<OsString>>();
+    file_names.sort();
 
-    let mut schemas: HashMap<String, Value> = HashMap::new();
+    let mut schemas: BTreeMap<String, Value> = BTreeMap::new();
     for file_name in file_names {
         let key = file_name.to_str().unwrap().trim_end_matches(".schema.json").to_string();
         let path = PathBuf::from(&schemas_path).join(file_name);
@@ -103,7 +105,30 @@ pub fn get_bundled_schema(
         let mut hoisted_defs = serde_json::Map::new();
         let transformed = transform(schema, key, &mut hoisted_defs);
         defs.insert(key.clone(), transformed);
+
         for (k, v) in hoisted_defs.into_iter() {
+            // workaround for "oneOf" arrays in different objects
+            if let Some(old_value) = defs.get(&k) &&
+                let Value::Object(old_value_map) = old_value &&
+                let Value::Object(new_value_map) = &v &&
+                let Some(old_value_arr) = old_value_map.get("oneOf") &&
+                let Some(new_value_arr) = new_value_map.get("oneOf") &&
+                let Value::Array(old_value_vec) = old_value_arr &&
+                let Value::Array(new_value_vec) = new_value_arr
+            {
+                let mut values_set: HashSet<Value> = HashSet::new();
+                old_value_vec.iter().for_each(|value| { values_set.insert(value.clone()); () });
+                new_value_vec.iter().for_each(|value| { values_set.insert(value.clone()); () });
+                let values_vec= values_set.into_iter().collect::<Vec<Value>>();
+                let values_arr = Value::Array(values_vec);
+
+                let mut one_of_map = serde_json::Map::new();
+                one_of_map.insert(k.clone(), values_arr);
+                defs.insert(k, Value::Object(one_of_map));
+
+                continue;
+            }
+
             defs.insert(k, v);
         }
     }
@@ -193,18 +218,18 @@ fn transform(
                     if let Value::Object(defs_map) = v {
                         for (def_name, def_val) in defs_map.iter() {
                             let rewritten_def = transform(def_val, current_doc, hoisted);
-                            hoisted.insert(format!("{def_name}"), rewritten_def);
+                            hoisted.insert(def_name.clone(), rewritten_def);
                         }
                     }
                     continue; // drop nested defs
                 }
-                if k == "$ref" {
-                    if let Value::String(s) = v {
-                        let new_ref = rewrite_ref_target(s);
-                        out.insert(k.clone(), Value::String(new_ref));
-                        continue;
-                    }
+
+                if k == "$ref" && let Value::String(s) = v {
+                    let new_ref = rewrite_ref_target(s);
+                    out.insert(k.clone(), Value::String(new_ref));
+                    continue;
                 }
+
                 out.insert(k.clone(), transform(v, current_doc, hoisted));
             }
             Value::Object(out)
@@ -230,8 +255,10 @@ fn rewrite_ref_target(s: &str) -> String {
                 return format!("#/$defs/{name}");
             }
         }
-        return format!("#/$defs/{}", base);
+
+        return format!("#/$defs/{base}");
     }
+
     if let Some(frag) = s.strip_prefix('#') {
         let frag = frag.trim_start_matches('/');
         if let Some(name) = frag.strip_prefix("$defs/") {
@@ -239,6 +266,7 @@ fn rewrite_ref_target(s: &str) -> String {
         }
         return s.to_string();
     }
+
     s.to_string()
 }
 
