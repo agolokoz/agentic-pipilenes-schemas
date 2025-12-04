@@ -36,7 +36,7 @@ pub fn generate_crate_structure(
     let cargo_toml_path = cargo_toml_path_buf.as_path();
     let mut cargo_toml_file = File::create(cargo_toml_path)?;
     let cargo_toml_content = format!(r#"[package]
-name = "{package_name}-dev"
+name = "{package_name}"
 version = "{package_version}"
 edition = "2024"
 description = "Rust types and parser generated from JSON schemas"
