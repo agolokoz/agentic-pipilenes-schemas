@@ -141,3 +141,7 @@ vite.config.ts.timestamp-*
 .vite/
 
 packages/
+target/
+
+.idea/
+bundled.schema.json
