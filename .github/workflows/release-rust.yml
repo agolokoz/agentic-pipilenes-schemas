@@ -10,12 +10,22 @@ jobs:
 
     env:
       CRATES_IO_API_KEY: ${{ secrets.CRATES_IO_API_KEY }}
-      PACKAGE_NAME: "agentic-pipelines-scheme-dev"
-      PACKAGE_VERSION: "0.0.1"
+      PACKAGE_NAME: ${{ vars.RUST_PACKAGE_NAME }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Tag must follow vX.X.X format (e.g., v1.0.0)"
+            exit 1
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
 
       - name: Install Rust
         uses: Swatinem/rust-cache@v2
@@ -28,7 +38,7 @@ jobs:
             -i ../../schemas \
             -o ../../packages \
             --package-name "${{ env.PACKAGE_NAME }}" \
-            --package-version "${{ env.PACKAGE_VERSION }}" \
+            --package-version "${{ steps.extract_version.outputs.version }}" \
             -v
         working-directory: tools/rust-generator
 
