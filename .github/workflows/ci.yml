@@ -51,10 +51,6 @@ jobs:
           workspaces: |
             rust
 
-      - name: Install dependencies
-        run: cargo install --locked
-        working-directory: tools/rust-generator
-
       - name: Generate crate
         run: cargo run
         working-directory: tools/rust-generator
