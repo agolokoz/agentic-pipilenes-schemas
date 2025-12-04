@@ -56,11 +56,5 @@ jobs:
         working-directory: tools/rust-generator
 
       - name: Generate crate
-        run: |
-          cargo run -- \
-            -i ../../schemas \
-            -o ../../packages \
-            --package-name "${{ env.PACKAGE_NAME }}" \
-            --package-version "${{ env.PACKAGE_VERSION }}" \
-            -v
+        run: cargo run
         working-directory: tools/rust-generator
