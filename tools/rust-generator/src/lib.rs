@@ -56,7 +56,31 @@ serde_json = "1.0.145"
     readme_path_buf.push("README.md");
     let readme_path = readme_path_buf.as_path();
     let mut readme_file = File::create(readme_path)?;
-    let readme_content = format!(r#"# Rust types and parser generated from JSON schemas."#);
+    let readme_content = format!(r#"# Rust types and parser generated from JSON schemas.
+
+## Installation
+```bash
+cargo add {package_name}
+```
+
+## Usage
+
+```rust
+use {package_name}::parse_json;
+use {package_name}::types::{{Graph}};
+
+fn main() {{
+    let graph_json: &str = "{{ here is your graph json }}"; 
+    let graph = parse_json::<Graph>(graph_json);
+    
+    if let Ok(graph) = graph {{
+        dbg!(&graph);
+    }} else {{
+        println!("Failed to parse graph");
+    }}
+}}
+```
+    "#);
     readme_file.write_all(readme_content.as_bytes())?;
 
     // ./rust/src
