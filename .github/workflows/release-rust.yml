@@ -30,3 +30,8 @@ jobs:
             --package-version "${{ env.PACKAGE_VERSION }}" \
             -v
         working-directory: tools/rust-generator
+
+      - name: Run tests
+        run: |
+          cargo test --lib tests
+        working-directory: packages/rust
