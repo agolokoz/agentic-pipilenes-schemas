@@ -4,9 +4,6 @@ on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
-  workflow_dispatch:
-    inputs:
-      release-rust:
 
 jobs:
   release:
@@ -75,28 +72,3 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  release-rust:
-    runs-on: ubuntu-latest
-
-    env:
-      PACKAGE_NAME: "agentic-pipelines-scheme"
-      PACKAGE_VERSION: "0.0.1"
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: rust
-
-      - name: Generate crate
-        run: |
-          cargo run -- \
-            -i ../../schemas \
-            -o ../../packages \
-            --package-name "${{ env.PACKAGE_NAME }}" \
-            --package-version "${{ env.PACKAGE_VERSION }}" \
-            -v
-        working-directory: tools/rust-generator
