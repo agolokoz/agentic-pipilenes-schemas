@@ -52,5 +52,5 @@ jobs:
             rust
 
       - name: Generate crate
-        run: cargo run
+        run: cargo build
         working-directory: tools/rust-generator
