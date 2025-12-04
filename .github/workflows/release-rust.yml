@@ -44,3 +44,4 @@ jobs:
       - name: Publish package
         run: |
           cargo publish
+        working-directory: packages/rust
