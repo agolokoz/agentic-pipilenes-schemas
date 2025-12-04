@@ -37,3 +37,30 @@ jobs:
       - name: Build package
         run: pnpm build
         working-directory: tools/ts-generator
+
+  test-and-build-rust:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            rust
+
+      - name: Install dependencies
+        run: cargo install --locked
+        working-directory: tools/rust-generator
+
+      - name: Generate crate
+        run: |
+          cargo run -- \
+            -i ../../schemas \
+            -o ../../packages \
+            --package-name "${{ env.PACKAGE_NAME }}" \
+            --package-version "${{ env.PACKAGE_VERSION }}" \
+            -v
+        working-directory: tools/rust-generator
